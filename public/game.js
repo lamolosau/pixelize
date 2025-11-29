@@ -1,5 +1,6 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const socket = io();
 
 // --- 1. CHARGEMENT DES IMAGES ---
 const idleImage = new Image();
@@ -24,6 +25,7 @@ runImage.onload = checkImagesLoaded;
 
 // --- 2. CONFIGURATION ---
 const player = {
+  id: "local",
   x: 0,
   y: 0,
   walkSpeed: 3,
@@ -39,6 +41,41 @@ const player = {
   autoMoving: false,
   forceRun: false,
 };
+
+const otherPlayers = {};
+
+// --- 3. GESTION RESEAU (SOCKET.IO) ---
+
+socket.on("currentPlayers", (serverPlayers) => {
+  for (const id in serverPlayers) {
+    if (id !== socket.id) {
+      otherPlayers[id] = serverPlayers[id];
+    } else {
+      // Optionnel: si tu veux que le serveur force ta position au début
+      // player.x = serverPlayers[id].x;
+      // player.y = serverPlayers[id].y;
+    }
+  }
+});
+
+socket.on("newPlayer", (data) => {
+  otherPlayers[data.id] = data.player;
+});
+
+socket.on("playerMoved", (data) => {
+  if (otherPlayers[data.id]) {
+    otherPlayers[data.id].x = data.x;
+    otherPlayers[data.id].y = data.y;
+    otherPlayers[data.id].frameY = data.frameY;
+    otherPlayers[data.id].flip = data.flip;
+    otherPlayers[data.id].moving = data.moving;
+    otherPlayers[data.id].running = data.running;
+  }
+});
+
+socket.on("playerDisconnected", (id) => {
+  delete otherPlayers[id];
+});
 
 // --- 4. INPUTS & UTILITAIRES ---
 const keys = {};
@@ -163,14 +200,31 @@ function loop() {
       if (dx < 0) player.flip = true;
     }
 
+    // ENVOI AU SERVEUR
+    socket.emit("playerMovement", {
+      x: player.x,
+      y: player.y,
+      frameY: player.frameY,
+      flip: player.flip,
+      moving: true,
+      running: player.running,
+    });
     saveGame();
+  } else {
+    socket.emit("playerMovement", {
+      x: player.x,
+      y: player.y,
+      frameY: player.frameY,
+      flip: player.flip,
+      moving: false,
+      running: false,
+    });
   }
 
   // B. DESSIN (RENDU)
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Indicateur Clic
   if (player.autoMoving) {
     ctx.beginPath();
     ctx.arc(player.targetX, player.targetY, 5, 0, Math.PI * 2);
@@ -178,8 +232,14 @@ function loop() {
     ctx.fill();
   }
 
-  // Dessin du joueur
-  drawSprite(player);
+  const entitiesToDraw = [player];
+  for (const id in otherPlayers) {
+    entitiesToDraw.push(otherPlayers[id]);
+  }
+
+  entitiesToDraw.sort((a, b) => a.y - b.y);
+
+  entitiesToDraw.forEach((entity) => drawSprite(entity));
 
   gameFrame++;
   requestAnimationFrame(loop);
@@ -214,11 +274,13 @@ function drawSprite(entity) {
   ctx.translate(entity.x, entity.y);
   if (entity.flip) ctx.scale(-1, 1);
 
+  // Ombre simple
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.beginPath();
   ctx.ellipse(0, drawH / 2 - 5, 10, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  // Dessin du personnage
   ctx.drawImage(
     spriteImg,
     frameX * spriteW,
