@@ -1,35 +1,36 @@
-# 🏃 Pixelize
+# 🌍 Pixelize Online
 
-> _"Il ne fait plus que marcher... il court !"_
+> _"Qui es-tu, petit pixel ?"_
 
-## 🚧 État actuel : v0.2.0 (Beta Controls)
+## 🚀 État actuel : v0.3.1 (Identity Update)
 
-Bienvenue sur **Pixelize**.
-Le projet évolue rapidement. Nous avons dépassé le simple affichage pour entrer dans la **mécanique de jeu**. Le moteur supporte désormais un système de contrôle hybride (Souris & Clavier) et une gestion de la vitesse (Marche vs Course).
+**Pixelize se dote d'une identité.**
+L'expérience multijoueur est désormais personnalisée : une fenêtre de connexion accueille les nouveaux arrivants, leur permettant de choisir un pseudo qui sera visible par tous les autres aventuriers dans le monde.
 
-## 🎯 L'Objectif
+## 🎯 Fonctionnalités Clés
 
-Construire un **MMORPG navigateur** en partant de zéro.
-L'objectif actuel est de peaufiner le "Game Feel" (la sensation de jeu) avant de synchroniser le tout en multijoueur.
+- **Système de Login :** Une modale stylisée "Pixel Art" demande votre nom à l'entrée.
+- **Identité Visuelle :** Les pseudos flottent au-dessus des personnages avec une police rétro.
+- **Multijoueur Temps Réel :** Déplacements et animations synchronisés via Socket.io.
+- **Contrôles Hybrides :** Déplacement Souris (Point & Click) ou Clavier.
 
 ## 🗺️ Roadmap (Feuille de route)
 
 L'évolution du projet :
 
-- [x] **Phase 1 :** Prototype (Carré rouge)
-- [x] **Phase 2 :** Intégration Graphique (Sprites Pixel Art) 🎨
-- [x] **Phase 3 :** Contrôles avancés (Souris "Point & Click" + Sprint) 🖱️
-- [ ] **Phase 4 :** Créer le serveur Node.js / Socket.io
-- [ ] **Phase 5 :** Synchronisation multijoueur (positions et animations)
-- [ ] **Phase 6 :** Interface (Pseudos, Chat)
+- [x] **Phase 1 :** Moteur graphique Canvas & Sprites 🎨
+- [x] **Phase 2 :** Contrôles Souris & Clavier 🎮
+- [x] **Phase 3 :** Serveur Node.js & Socket.io 🌐
+- [x] **Phase 4 :** Synchronisation Multijoueur
+- [x] **Phase 5 :** Système de Pseudos & UI de Login 🆔
+- [ ] **Phase 6 :** Chat en direct
+- [ ] **Phase 7 :** Collisions avec le décor
 
 ## 🎮 Commandes
 
-Le joueur a le choix entre deux modes de contrôle :
+### 🖱️ Souris
 
-### 🖱️ Souris (Recommandé)
-
-- **Clic gauche** : Se déplacer vers la destination (Marche).
+- **Clic gauche** : Marcher vers la destination.
 - **Double-clic** : Courir vers la destination (Sprint).
 
 ### ⌨️ Clavier
@@ -37,20 +38,27 @@ Le joueur a le choix entre deux modes de contrôle :
 - **Flèches / ZQSD** : Se déplacer.
 - **Shift (Maj)** : Maintenir pour courir.
 
-## 🛠️ Installation et Test
+## 🛠️ Installation et Lancement
 
-1. Clonez le projet :
+1. **Cloner et Installer :**
+
    ```bash
    git clone https://github.com/lamolosau/pixelize.git
+   cd pixelize
+   npm install
 
-2.  Ouvrez simplement le fichier `index.html` dans votre navigateur.
+   ```
 
-## 💻 Stack Technique
+2. **Lancer le serveur :**
 
-  * **Langage :** JavaScript (Vanilla)
-  * **Rendu :** HTML5 Canvas API
-  * **Logique :** Gestion des inputs (Mouse Events & Key Events), boucle de jeu (Game Loop).
+   ```bash
+   node server.js
 
------
+   ```
 
-*Code artisanal, pixel par pixel.*
+3. **Jouer :**
+   Rendez-vous sur `http://localhost:3000`.
+
+---
+
+_Fait avec ❤️, Node.js et beaucoup de pixels._
