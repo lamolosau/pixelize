@@ -54,4 +54,3 @@ Le joueur a le choix entre deux modes de contrôle :
 -----
 
 *Code artisanal, pixel par pixel.*
-```
