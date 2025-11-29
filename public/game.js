@@ -16,9 +16,33 @@ function checkImagesLoaded() {
   if (imagesLoaded === 3) {
     resize();
     loadGame();
-    loop();
   }
 }
+
+// --- GESTION DU LOGIN ---
+const loginModal = document.getElementById("loginModal");
+const usernameInput = document.getElementById("usernameInput");
+const playBtn = document.getElementById("playBtn");
+
+playBtn.addEventListener("click", () => {
+  const name = usernameInput.value.trim();
+  if (name.length > 0) {
+    player.name = name;
+    loginModal.style.display = "none";
+
+    socket.emit("playerMovement", {
+      x: player.x,
+      y: player.y,
+      frameY: player.frameY,
+      flip: player.flip,
+      moving: false,
+      running: false,
+      name: player.name,
+    });
+
+    loop();
+  }
+});
 idleImage.onload = checkImagesLoaded;
 walkImage.onload = checkImagesLoaded;
 runImage.onload = checkImagesLoaded;
@@ -26,6 +50,7 @@ runImage.onload = checkImagesLoaded;
 // --- 2. CONFIGURATION ---
 const player = {
   id: "local",
+  name: "Joueur",
   x: 0,
   y: 0,
   walkSpeed: 3,
@@ -58,10 +83,12 @@ socket.on("currentPlayers", (serverPlayers) => {
   }
 });
 
+// Un nouveau joueur arrive
 socket.on("newPlayer", (data) => {
   otherPlayers[data.id] = data.player;
 });
 
+// Un joueur bouge
 socket.on("playerMoved", (data) => {
   if (otherPlayers[data.id]) {
     otherPlayers[data.id].x = data.x;
@@ -70,9 +97,11 @@ socket.on("playerMoved", (data) => {
     otherPlayers[data.id].flip = data.flip;
     otherPlayers[data.id].moving = data.moving;
     otherPlayers[data.id].running = data.running;
+    otherPlayers[data.id].name = data.name;
   }
 });
 
+// Déconnexion
 socket.on("playerDisconnected", (id) => {
   delete otherPlayers[id];
 });
@@ -109,6 +138,7 @@ function resize() {
 }
 window.addEventListener("resize", resize);
 
+// Sauvegarde locale simple
 function saveGame() {
   const saveData = { x: player.x, y: player.y };
   localStorage.setItem("myPixelGame_save", JSON.stringify(saveData));
@@ -208,6 +238,7 @@ function loop() {
       flip: player.flip,
       moving: true,
       running: player.running,
+      name: player.name,
     });
     saveGame();
   } else {
@@ -218,6 +249,7 @@ function loop() {
       flip: player.flip,
       moving: false,
       running: false,
+      name: player.name,
     });
   }
 
@@ -264,34 +296,50 @@ function drawSprite(entity) {
   }
 
   const frameX = Math.floor(gameFrame / stagger) % maxFrames;
-
   const spriteW = spriteImg.width / maxFrames;
   const spriteH = spriteImg.height / 5;
   const drawW = spriteW * player.scale;
   const drawH = spriteH * player.scale;
 
+  const cutTop = 1;
+  const cutBottom = 0;
+
+  // 1. DESSIN DU PERSONNAGE
   ctx.save();
-  ctx.translate(entity.x, entity.y);
+  ctx.translate(Math.floor(entity.x), Math.floor(entity.y));
   if (entity.flip) ctx.scale(-1, 1);
 
-  // Ombre simple
+  // Ombre
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.beginPath();
   ctx.ellipse(0, drawH / 2 - 5, 10, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Dessin du personnage
   ctx.drawImage(
     spriteImg,
     frameX * spriteW,
-    entity.frameY * spriteH + 1,
+    entity.frameY * spriteH + cutTop,
     spriteW,
-    spriteH,
+    spriteH - cutTop - cutBottom,
     -drawW / 2,
     -drawH / 2,
     drawW,
     drawH
   );
-
   ctx.restore();
+
+  // 2. DESSIN DU PSEUDO (Nouveau !)
+  if (entity.name) {
+    ctx.save();
+
+    ctx.font = '10px "Press Start 2P"';
+    ctx.textAlign = "center";
+
+    ctx.fillStyle = "black";
+    ctx.fillText(entity.name, entity.x + 2, entity.y - drawH / 2 - 5 + 2);
+
+    ctx.fillStyle = "white";
+    ctx.fillText(entity.name, entity.x, entity.y - drawH / 2 - 5);
+    ctx.restore();
+  }
 }

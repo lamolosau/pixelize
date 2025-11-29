@@ -3,10 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pixel</title>
+    <title>Pixel Aventure</title>
     <link rel="stylesheet" href="style.css" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
+    <div id="loginModal">
+      <div class="modal-content">
+        <h2>Bienvenue !</h2>
+        <p>Choisis ton pseudo :</p>
+        <input
+          type="text"
+          id="usernameInput"
+          placeholder="Ton nom..."
+          maxlength="10"
+        />
+        <button id="playBtn">JOUER</button>
+      </div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
     <script src="/socket.io/socket.io.js"></script>
     <script src="game.js"></script>
