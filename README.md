@@ -37,7 +37,7 @@ Pour l'instant, le jeu se joue exclusivement au **clavier** :
 
 1. Clonez le projet :
    ```bash
-   git clone [https://github.com/TON-PSEUDO/pixelize.git](https://github.com/TON-PSEUDO/pixelize.git)
+   git clone [https://github.com/lamolosau/pixelize.git](https://github.com/lamolosau/pixelize.git)
 
 2.  Ouvrez simplement le fichier `index.html` dans votre navigateur.
 
