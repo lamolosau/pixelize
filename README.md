@@ -38,6 +38,8 @@ L'évolution du projet :
 - **Flèches / ZQSD** : Se déplacer.
 - **Shift (Maj)** : Maintenir pour courir.
 
+## 🛠️ Installation et Lancement (Local)
+
 ## 🛠️ Installation et Lancement
 
 1. **Cloner et Installer :**
