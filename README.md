@@ -42,9 +42,6 @@ Le joueur a le choix entre deux modes de contrôle :
 1. Clonez le projet :
    ```bash
    git clone https://github.com/lamolosau/pixelize.git
-   ```
-
-```
 
 2.  Ouvrez simplement le fichier `index.html` dans votre navigateur.
 
