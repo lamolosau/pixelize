@@ -51,4 +51,3 @@ Pour l'instant, le jeu se joue exclusivement au **clavier** :
 
 *Fait main. Pixel par pixel.*
 
-```
