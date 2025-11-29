@@ -1,82 +1,70 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// --- 1. CHARGEMENT ---
+// --- 1. CHARGEMENT DES IMAGES ---
 const idleImage = new Image();
 idleImage.src = "idle.png";
-
 const walkImage = new Image();
 walkImage.src = "walk.png";
+const runImage = new Image();
+runImage.src = "run.png";
 
 let imagesLoaded = 0;
-const totalImages = 2;
-
 function checkImagesLoaded() {
   imagesLoaded++;
-  if (imagesLoaded === totalImages) {
-    // Une fois les images chargées, on tente de charger la sauvegarde
-    loadGame();
+  if (imagesLoaded === 3) {
     resize();
+    loadGame();
     loop();
   }
 }
 idleImage.onload = checkImagesLoaded;
 walkImage.onload = checkImagesLoaded;
+runImage.onload = checkImagesLoaded;
 
 // --- 2. CONFIGURATION ---
 const player = {
   x: 0,
   y: 0,
-  speed: 3,
-  width: 20,
-  height: 20,
+  walkSpeed: 3,
+  runSpeed: 6,
+  hitboxSize: 20,
   scale: 3,
-  frameX: 0,
   frameY: 0,
-  moving: false,
   flip: false,
+  moving: false,
+  running: false,
+  targetX: null,
+  targetY: null,
+  autoMoving: false,
+  forceRun: false,
 };
 
-let gameFrame = 0;
+// --- 4. INPUTS & UTILITAIRES ---
+const keys = {};
+window.addEventListener("keydown", (e) => {
+  keys[e.key] = true;
+  player.autoMoving = false;
+});
+window.addEventListener("keyup", (e) => (keys[e.key] = false));
 
-// --- FONCTIONS DE SAUVEGARDE (NOUVEAU) ---
-
-function saveGame() {
-  const saveData = {
-    x: player.x,
-    y: player.y,
-    frameY: player.frameY,
-    flip: player.flip,
-  };
-  // On transforme l'objet en texte pour le stocker
-  localStorage.setItem("myPixelGame_save", JSON.stringify(saveData));
-}
-
-function loadGame() {
-  const saveString = localStorage.getItem("myPixelGame_save");
-
-  if (saveString) {
-    // Si une sauvegarde existe, on la lit
-    const saveData = JSON.parse(saveString);
-    player.x = saveData.x;
-    player.y = saveData.y;
-    player.frameY = saveData.frameY;
-    player.flip = saveData.flip;
-  } else {
-    // Sinon (première fois), on centre le joueur
-    player.x = canvas.width / 2;
-    player.y = canvas.height / 2;
-  }
-}
+let lastClickTime = 0;
+canvas.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  const currentTime = new Date().getTime();
+  player.forceRun = currentTime - lastClickTime < 300;
+  lastClickTime = currentTime;
+  player.targetX = e.clientX;
+  player.targetY = e.clientY;
+  player.autoMoving = true;
+});
+window.addEventListener("contextmenu", (e) => e.preventDefault());
 
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   ctx.imageSmoothingEnabled = false;
   canvas.style.imageRendering = "pixelated";
-
-  // Si le joueur est à 0,0 (bug ou pas de save chargée), on centre par sécurité
-  // Mais on évite d'écraser la position chargée par loadGame
   if (player.x === 0 && player.y === 0) {
     player.x = canvas.width / 2;
     player.y = canvas.height / 2;
@@ -84,92 +72,159 @@ function resize() {
 }
 window.addEventListener("resize", resize);
 
-const keys = {};
-window.addEventListener("keydown", (e) => (keys[e.key] = true));
-window.addEventListener("keyup", (e) => (keys[e.key] = false));
+function saveGame() {
+  const saveData = { x: player.x, y: player.y };
+  localStorage.setItem("myPixelGame_save", JSON.stringify(saveData));
+}
+function loadGame() {
+  const saveString = localStorage.getItem("myPixelGame_save");
+  if (saveString) {
+    const d = JSON.parse(saveString);
+    player.x = d.x;
+    player.y = d.y;
+  } else {
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+  }
+}
+
+// --- 5. MOTEUR DU JEU ---
+let gameFrame = 0;
 
 function loop() {
-  // --- 3. DÉPLACEMENT ---
+  // A. LOGIQUE DU JOUEUR LOCAL
   let dx = 0;
   let dy = 0;
+  let keyboardActive = false;
 
-  if (keys.ArrowUp) dy = -1;
-  if (keys.ArrowDown) dy = 1;
-  if (keys.ArrowLeft) dx = -1;
-  if (keys.ArrowRight) dx = 1;
+  if (keys.ArrowUp) {
+    dy = -1;
+    keyboardActive = true;
+  }
+  if (keys.ArrowDown) {
+    dy = 1;
+    keyboardActive = true;
+  }
+  if (keys.ArrowLeft) {
+    dx = -1;
+    keyboardActive = true;
+  }
+  if (keys.ArrowRight) {
+    dx = 1;
+    keyboardActive = true;
+  }
 
+  // Souris
+  if (player.autoMoving) {
+    const distGlobalX = player.targetX - player.x;
+    const distGlobalY = player.targetY - player.y;
+    const distance = Math.sqrt(distGlobalX ** 2 + distGlobalY ** 2);
+    if (distance < 5) {
+      player.autoMoving = false;
+      player.x = player.targetX;
+      player.y = player.targetY;
+    } else {
+      dx = distGlobalX / distance;
+      dy = distGlobalY / distance;
+    }
+  }
+
+  // État mouvement
   player.moving = dx !== 0 || dy !== 0;
-
   if (player.moving) {
-    let currentSpeed = player.speed;
-    if (dx !== 0 && dy !== 0) currentSpeed /= 1.41;
+    player.running = player.autoMoving ? player.forceRun : keys.Shift;
+  } else {
+    player.running = false;
+  }
 
-    player.x += dx * currentSpeed;
-    player.y += dy * currentSpeed;
+  // Application Physique
+  if (player.moving) {
+    let speed = player.running ? player.runSpeed : player.walkSpeed;
+    if (keyboardActive && dx !== 0 && dy !== 0) speed /= 1.41;
 
-    // Collisions
-    const halfSize = (player.width * player.scale) / 2;
-    if (player.x < halfSize) player.x = halfSize;
-    if (player.y < halfSize) player.y = halfSize;
-    if (player.x > canvas.width - halfSize) player.x = canvas.width - halfSize;
-    if (player.y > canvas.height - halfSize)
-      player.y = canvas.height - halfSize;
+    player.x += dx * speed;
+    player.y += dy * speed;
 
-    // --- 4. DIRECTION ET MIROIR ---
+    // Limites écran
+    const margin = (player.hitboxSize * player.scale) / 2;
+    player.x = Math.max(margin, Math.min(canvas.width - margin, player.x));
+    player.y = Math.max(margin, Math.min(canvas.height - margin, player.y));
+
+    // Direction (Flip / FrameY)
     player.flip = false;
-
-    if (dy > 0) {
-      if (dx === 0) player.frameY = 0;
-      else {
-        player.frameY = 1;
-        if (dx < 0) player.flip = true;
-      }
-    } else if (dy < 0) {
-      if (dx === 0) player.frameY = 4;
-      else {
-        player.frameY = 3;
-        if (dx < 0) player.flip = true;
-      }
-    } else if (dx !== 0) {
+    if (dy > 0.5) {
+      player.frameY = Math.abs(dx) < 0.5 ? 0 : 1;
+      if (dx < 0) player.flip = true;
+    } else if (dy < -0.5) {
+      player.frameY = Math.abs(dx) < 0.5 ? 4 : 3;
+      if (dx < 0) player.flip = true;
+    } else if (Math.abs(dx) > 0.1) {
       player.frameY = 2;
       if (dx < 0) player.flip = true;
     }
 
-    // --- SAUVEGARDE AUTOMATIQUE ---
-    // On sauvegarde dès qu'on bouge
     saveGame();
   }
 
-  // --- 5. CHOIX DU SPRITE ---
-  const currentSprite = player.moving ? walkImage : idleImage;
+  // B. DESSIN (RENDU)
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // --- 6. ANIMATION ---
-  const staggerFrames = player.moving ? 8 : 20;
-
-  if (gameFrame % staggerFrames === 0) {
-    if (player.frameX < 3) player.frameX++;
-    else player.frameX = 0;
+  // Indicateur Clic
+  if (player.autoMoving) {
+    ctx.beginPath();
+    ctx.arc(player.targetX, player.targetY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.1)";
+    ctx.fill();
   }
+
+  // Dessin du joueur
+  drawSprite(player);
+
   gameFrame++;
+  requestAnimationFrame(loop);
+}
 
-  // --- 7. DESSIN ---
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+// --- 6. FONCTION DE DESSIN GÉNÉRIQUE ---
+function drawSprite(entity) {
+  let spriteImg = idleImage;
+  let maxFrames = 4;
+  let stagger = 20;
+
+  if (entity.moving) {
+    if (entity.running) {
+      spriteImg = runImage;
+      maxFrames = 6;
+      stagger = 5;
+    } else {
+      spriteImg = walkImage;
+      maxFrames = 4;
+      stagger = 8;
+    }
+  }
+
+  const frameX = Math.floor(gameFrame / stagger) % maxFrames;
+
+  const spriteW = spriteImg.width / maxFrames;
+  const spriteH = spriteImg.height / 5;
+  const drawW = spriteW * player.scale;
+  const drawH = spriteH * player.scale;
+
   ctx.save();
-  ctx.translate(player.x, player.y);
-  if (player.flip) ctx.scale(-1, 1);
+  ctx.translate(entity.x, entity.y);
+  if (entity.flip) ctx.scale(-1, 1);
 
-  const drawW = player.width * player.scale;
-  const drawH = player.height * player.scale;
-
-  const offsetY = 0.1;
-  const clipHeight = 0.2;
+  ctx.fillStyle = "rgba(0,0,0,0.2)";
+  ctx.beginPath();
+  ctx.ellipse(0, drawH / 2 - 5, 10, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.drawImage(
-    currentSprite,
-    player.frameX * player.width,
-    player.frameY * player.height + offsetY,
-    player.width,
-    player.height - clipHeight,
+    spriteImg,
+    frameX * spriteW,
+    entity.frameY * spriteH + 1,
+    spriteW,
+    spriteH,
     -drawW / 2,
     -drawH / 2,
     drawW,
@@ -177,9 +232,4 @@ function loop() {
   );
 
   ctx.restore();
-  requestAnimationFrame(loop);
 }
-
-// NOTE : Pour réinitialiser la position un jour, tape :
-// localStorage.clear();
-// dans la console du navigateur.
