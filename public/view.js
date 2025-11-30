@@ -1,4 +1,3 @@
-// Helper : Vérifie si une case est visuellement de la terre (pour le dessin)
 function isLand(x, y) {
   if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) return false;
   return worldMap[y][x] === 0;
@@ -25,6 +24,26 @@ function drawMap() {
             ACTUAL_TILE_SIZE + 1,
             ACTUAL_TILE_SIZE + 1
           );
+
+          const textureId = textureMap[y][x];
+
+          if (textureId > 0) {
+            const srcX = (textureId - 1) * 16;
+
+            const srcY = images.cliff.height - 16;
+
+            ctx.drawImage(
+              images.cliff,
+              srcX,
+              srcY,
+              16,
+              16,
+              screenX,
+              screenY,
+              ACTUAL_TILE_SIZE + 1,
+              ACTUAL_TILE_SIZE + 1
+            );
+          }
         } else if (tileType === 1) {
           drawWaterCoast(x, y, screenX, screenY);
         }
@@ -34,11 +53,11 @@ function drawMap() {
 }
 
 function drawWaterCoast(gridX, gridY, screenX, screenY) {
-  // Ta super logique de dessin des bords d'eau
   const landUp = isLand(gridX, gridY - 1);
   const landDown = isLand(gridX, gridY + 1);
   const landLeft = isLand(gridX - 1, gridY);
   const landRight = isLand(gridX + 1, gridY);
+
   const landUpLeft = isLand(gridX - 1, gridY - 1);
   const landUpRight = isLand(gridX + 1, gridY - 1);
   const landDownLeft = isLand(gridX - 1, gridY + 1);
@@ -61,6 +80,26 @@ function drawWaterCoast(gridX, gridY, screenX, screenY) {
       ACTUAL_TILE_SIZE + 1,
       ACTUAL_TILE_SIZE + 1
     );
+
+    const textureId = textureMap[gridY][gridX];
+
+    if (textureId > 0) {
+      const srcX = (textureId - 1) * 16;
+      const srcY = images.waterAtlas.height - 16;
+
+      ctx.drawImage(
+        images.waterAtlas,
+        srcX,
+        srcY,
+        16,
+        16,
+        screenX,
+        screenY,
+        ACTUAL_TILE_SIZE + 1,
+        ACTUAL_TILE_SIZE + 1
+      );
+    }
+
     return;
   }
 

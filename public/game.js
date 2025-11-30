@@ -29,6 +29,7 @@ const imageSources = {
   grass: "tiles/Grass_Middle.png",
   waterBase: "tiles/Water_Middle.png",
   waterAtlas: "tiles/Water_Tile.png",
+  cliff: "tiles/Cliff_Tile.png",
 };
 
 let imagesLoaded = 0;
@@ -46,7 +47,7 @@ for (let key in imageSources) {
 // --- INITIALISATION ---
 function startGame() {
   resize();
-  initMap(); // Vient de data.js !
+  initMap();
   loadGame();
 
   if (player.x === 0 && player.y === 0) {
@@ -201,11 +202,10 @@ function loop() {
     )
   );
 
-  // 2. DESSIN (Appel aux fonctions de view.js)
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  drawMap(); // Vient de view.js
+  drawMap();
 
   if (player.autoMoving) {
     ctx.beginPath();
@@ -220,13 +220,12 @@ function loop() {
     ctx.fill();
   }
 
-  drawPlayerSprite(player); // Vient de view.js
+  drawPlayerSprite(player);
 
   gameFrame++;
   requestAnimationFrame(loop);
 }
 
-// Collision Physique (Reste dans LOGIC car ça décide si on BOUGE ou pas)
 function isWalkable(targetX, targetY) {
   const radius = player.hitboxSize / 2;
   const pointsToCheck = [
@@ -241,7 +240,7 @@ function isWalkable(targetX, targetY) {
     const gridY = Math.floor(point.y / ACTUAL_TILE_SIZE);
     if (gridX < 0 || gridX >= mapWidth || gridY < 0 || gridY >= mapHeight)
       return false;
-    if (worldMap[gridY][gridX] !== 0) return false; // Lit worldMap de data.js
+    if (worldMap[gridY][gridX] !== 0) return false;
   }
   return true;
 }
