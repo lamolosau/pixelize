@@ -220,7 +220,7 @@ function drawAtmosphere() {
   const now = new Date();
   const time = now.getHours() + now.getMinutes() / 60;
   // Pour tester, décommente la ligne ci-dessous pour forcer une heure (ex: 18.5 pour le coucher de soleil)
-  // const time = 21;
+  // const time = 7;
   const atmosphere = getAtmosphereColor(time);
 
   if (time > 6 && time < 20) {
