@@ -231,6 +231,8 @@ function loop() {
 
   drawPlayerSprite(player);
 
+  drawAtmosphere();
+
   gameFrame++;
   requestAnimationFrame(loop);
 }
