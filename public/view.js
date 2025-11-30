@@ -214,16 +214,58 @@ function drawPlayerSprite(entity) {
   ctx.restore();
 }
 
-// --- EFFETS VISUELS ---
+// --- SYSTÈME JOUR / NUIT DYNAMIQUE ---
+
 function drawAtmosphere() {
+  const now = new Date();
+  const time = now.getHours() + now.getMinutes() / 60;
+  // Pour tester, décommente la ligne ci-dessous pour forcer une heure (ex: 18.5 pour le coucher de soleil)
+  // const time = 21;
+  const atmosphere = getAtmosphereColor(time);
+
+  if (time > 6 && time < 20) {
+    drawSun(time);
+  }
+
   ctx.save();
-  ctx.globalCompositeOperation = "overlay";
-  ctx.fillStyle = "rgba(255, 150, 40, 0.2)";
+  if (time < 6 || time > 20) {
+    ctx.globalCompositeOperation = "multiply";
+  } else {
+    ctx.globalCompositeOperation = "overlay";
+  }
+
+  ctx.fillStyle = `rgba(${atmosphere.r}, ${atmosphere.g}, ${atmosphere.b}, ${atmosphere.a})`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.restore();
 
-  const radius = Math.hypot(canvas.width, canvas.height) / 2;
+  drawVignette(atmosphere.a);
+}
 
+function drawSun(time) {
+  const percentDay = (time - 6) / (20 - 6);
+  const sunX = canvas.width * (-0.2 + percentDay * 1.4);
+
+  const heightFactor = Math.sin(percentDay * Math.PI);
+
+  const sunY = canvas.height * 0.9 - canvas.height * 2.0 * heightFactor;
+
+  const radius = Math.max(canvas.width, canvas.height) * 2.5;
+
+  const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, radius);
+
+  sunGlow.addColorStop(0, "rgba(255, 255, 240, 0.3)");
+  sunGlow.addColorStop(0.3, "rgba(255, 255, 220, 0.15)");
+  sunGlow.addColorStop(1, "rgba(255, 200, 150, 0)");
+
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = sunGlow;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+}
+
+function drawVignette(darknessLevel) {
+  const radius = Math.hypot(canvas.width, canvas.height) / 2;
   const vignette = ctx.createRadialGradient(
     canvas.width / 2,
     canvas.height / 2,
@@ -233,11 +275,26 @@ function drawAtmosphere() {
     radius
   );
 
+  const opacityEdge = 0.5 + darknessLevel * 0.4;
+
   vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
-  vignette.addColorStop(0.3, "rgba(0, 0, 0, 0)");
-  vignette.addColorStop(0.65, "rgba(0, 0, 0, 0.2)");
-  vignette.addColorStop(1, "rgba(0, 0, 0, 0.85)");
+  vignette.addColorStop(0.5, "rgba(0, 0, 0, 0.1)");
+  vignette.addColorStop(1, `rgba(0, 0, 0, ${opacityEdge})`);
 
   ctx.fillStyle = vignette;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function getAtmosphereColor(hour) {
+  if (hour < 5) return { r: 10, g: 10, b: 40, a: 0.85 };
+
+  if (hour < 8) return { r: 255, g: 100, b: 50, a: 0.3 };
+
+  if (hour < 17) return { r: 255, g: 255, b: 255, a: 0.05 };
+
+  if (hour < 20) return { r: 255, g: 140, b: 20, a: 0.45 };
+
+  if (hour < 24) return { r: 10, g: 10, b: 40, a: 0.85 };
+
+  return { r: 0, g: 0, b: 0, a: 0 };
 }
