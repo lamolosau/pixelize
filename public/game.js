@@ -35,12 +35,21 @@ const imageSources = {
 let imagesLoaded = 0;
 const totalImages = Object.keys(imageSources).length;
 
+// Fonction de chargement
 for (let key in imageSources) {
   images[key] = new Image();
   images[key].src = imageSources[key];
   images[key].onload = () => {
     imagesLoaded++;
-    if (imagesLoaded === totalImages) startGame();
+    console.log(`Image chargée: ${key} (${imagesLoaded}/${totalImages})`);
+
+    if (imagesLoaded === totalImages) {
+      console.log("Tout est chargé, en attente du joueur...");
+      document.getElementById("start-btn").addEventListener("click", () => {
+        document.getElementById("start-screen").style.display = "none";
+        startGame();
+      });
+    }
   };
 }
 

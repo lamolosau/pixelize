@@ -3,16 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pixel</title>
+    <title>Pixelize</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <canvas id="gameCanvas"></canvas>
 
+    <div id="ui-layer">
+      <div id="start-screen">
+        <h1>PIXELIZE</h1>
+        <p>Utilise les flèches ou la souris pour bouger</p>
+        <button id="start-btn">JOUER</button>
+      </div>
+    </div>
+
     <script src="data.js"></script>
-
     <script src="view.js"></script>
-
     <script src="game.js"></script>
   </body>
 </html>
